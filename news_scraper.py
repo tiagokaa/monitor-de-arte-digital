@@ -7,33 +7,33 @@ from urllib.parse import quote
 from html import escape
 
 # ======================================
-# CONFIGURAÇÕES
+# CONFIGURACOES
 # ======================================
 
 KEYWORDS = [
-    "calcário agrícola",
-    "cal agrícola",
-    "calcário",
+    "calcario agricola",
+    "cal agricola",
+    "calcario",
     "corretivo de solo",
     "limestone",
     "agricultural lime",
     "Lhoist",
-    “Ical”,
-    “Cal Cruzeiro”,
-    “Sibelco”,
-    “Brasical”,
-    “CMOC”,
-    “Mosaic”,
-    “Ureia”,
-    “Enxofre”,
-    “Sufur”,
-    “Biofragane”
+    "Ical",
+    "Cal Cruzeiro",
+    "Sibelco",
+    "Brasical",
+    "CMOC",
+    "Mosaic",
+    "Ureia",
+    "Enxofre",
+    "Sufur",
+    "Biofragane"
 ]
 
 DIAS_RETROATIVOS = 360
 
 # ======================================
-# COLETA DAS NOTÍCIAS
+# COLETA DAS NOTICIAS
 # ======================================
 
 data_limite = datetime.now() - timedelta(days=DIAS_RETROATIVOS)
@@ -68,7 +68,7 @@ for keyword in KEYWORDS:
 
                     noticias.append({
                         "Palavra-chave": keyword,
-                        "Título": item.title.text.strip(),
+                        "Titulo": item.title.text.strip(),
                         "Data": data_pub,
                         "Link": item.link.text.strip()
                     })
@@ -86,11 +86,11 @@ for keyword in KEYWORDS:
 df = pd.DataFrame(noticias)
 
 if df.empty:
-    print("Nenhuma notícia encontrada.")
+    print("Nenhuma noticia encontrada.")
     raise SystemExit()
 
 df = df.drop_duplicates(
-    subset=["Título"]
+    subset=["Titulo"]
 )
 
 df = df.sort_values(
@@ -130,7 +130,7 @@ cards_html = ""
 
 for idx, (_, row) in enumerate(df.iterrows(), 1):
 
-    titulo = escape(str(row["Título"]))
+    titulo = escape(str(row["Titulo"]))
     keyword = escape(str(row["Palavra-chave"]))
     data = row["Data"].strftime("%d/%m/%Y %H:%M")
     link = escape(str(row["Link"]))
@@ -143,7 +143,7 @@ for idx, (_, row) in enumerate(df.iterrows(), 1):
             <span class="badge">{keyword}</span>
         </div>
 
-        <a href="{link}" target="_blank" rel="noopener noreferrer" class="card-title-link" title="Abrir notícia">
+        <a href="{link}" target="_blank" rel="noopener noreferrer" class="card-title-link" title="Abrir noticia">
             <h3 class="card-title">{titulo}</h3>
         </a>
 
@@ -164,7 +164,7 @@ html = f"""
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitor de Notícias de Calcário</title>
+    <title>Monitor de Noticias de Calcario</title>
 
     <style>
         * {{
@@ -330,14 +330,14 @@ html = f"""
 <body>
 
     <header>
-        <h1>📰 Monitor de Notícias de Calcário</h1>
+        <h1>📰 Monitor de Noticias de Calcario</h1>
         <div class="stats">
             <div class="stat">
-                Notícias encontradas
+                Noticias encontradas
                 <strong>{len(df)}</strong>
             </div>
             <div class="stat">
-                Última atualização
+                Ultima atualizacao
                 <strong>{ultima_atualizacao}</strong>
             </div>
         </div>
@@ -348,7 +348,7 @@ html = f"""
     </main>
 
     <footer>
-        <p>Monitor de notícias automático • Atualizado em {ultima_atualizacao}</p>
+        <p>Monitor de noticias automatico • Atualizado em {ultima_atualizacao}</p>
     </footer>
 
 </body>
@@ -366,6 +366,6 @@ with open(
 
     f.write(html)
 
-print(f"✅ Excel gerado: {arquivo_excel}")
-print(f"✅ HTML gerado : {arquivo_html}")
-print(f"✅ Notícias encontradas: {len(df)}")
+print(f"Sucesso! Excel gerado: {arquivo_excel}")
+print(f"Sucesso! HTML gerado : {arquivo_html}")
+print(f"Sucesso! Noticias encontradas: {len(df)}")

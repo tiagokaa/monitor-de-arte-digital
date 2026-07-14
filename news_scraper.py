@@ -17,7 +17,7 @@ KEYWORDS = [
     "corretivo de solo",
     "limestone",
     "agricultural lime",
-    "Lhoist”,
+    "Lhoist",
     “Ical”,
     “Cal Cruzeiro”,
     “Sibelco”,

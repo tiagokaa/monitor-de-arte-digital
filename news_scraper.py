@@ -55,6 +55,18 @@ def montar_query_google(keyword: str) -> str:
 
     return termo
 
+def noticia_corresponde_keyword(titulo: str, keyword: str) -> bool:
+
+    termo = keyword.strip()
+    titulo_normalizado = titulo.casefold()
+
+    # Para termos entre aspas, exigimos frase exata no titulo.
+    if termo.startswith("\"") and termo.endswith("\"") and len(termo) > 2:
+        termo_limpo = termo[1:-1].strip().casefold()
+        return termo_limpo in titulo_normalizado
+
+    return True
+
 def coletar_noticias_rss(keyword: str, fonte: str, rss_url: str) -> None:
 
     try:
@@ -76,9 +88,13 @@ def coletar_noticias_rss(keyword: str, fonte: str, rss_url: str) -> None:
 
                 if data_pub.tz_localize(None) >= data_limite:
 
+                    titulo = item.title.text.strip()
+                    if not noticia_corresponde_keyword(titulo, keyword):
+                        continue
+
                     noticias.append({
                         "Palavra-chave": keyword,
-                        "Titulo": item.title.text.strip(),
+                        "Titulo": titulo,
                         "Data": data_pub,
                         "Link": item.link.text.strip()
                     })

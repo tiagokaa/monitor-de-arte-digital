@@ -229,12 +229,21 @@ if df.empty:
     print("Nenhuma noticia encontrada.")
     raise SystemExit()
 
-df = df.drop_duplicates(subset=["Titulo", "Categoria", "Palavra-chave"])
-
 df = df.sort_values(
     by="Data",
     ascending=False
 )
+
+df["TituloNormalizado"] = (
+    df["Titulo"]
+    .astype(str)
+    .str.strip()
+    .str.casefold()
+)
+
+# Mantém apenas uma ocorrência por notícia, mesmo que apareça em múltiplas categorias/keywords.
+df = df.drop_duplicates(subset=["TituloNormalizado"], keep="first")
+df = df.drop(columns=["TituloNormalizado"])
 
 # ======================================
 # HTML5 COM DESIGN MODERNO

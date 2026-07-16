@@ -229,26 +229,6 @@ df = df.sort_values(
 )
 
 # ======================================
-# EXCEL
-# ======================================
-
-arquivo_excel = (
-    f"Noticias_Arte_Digital_{datetime.now(TIMEZONE):%Y%m%d}.xlsx"
-)
-
-df_excel = df.copy()
-
-df_excel["Data"] = (
-    df_excel["Data"]
-    .dt.strftime("%d/%m/%Y %H:%M")
-)
-
-df_excel.to_excel(
-    arquivo_excel,
-    index=False
-)
-
-# ======================================
 # HTML5 COM DESIGN MODERNO
 # ======================================
 
@@ -309,7 +289,15 @@ html = f"""
 
         body {{
             font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-            background: #f4f4f4;
+            background-color: #f3f5f7;
+            background-image:
+                radial-gradient(circle at 20% 20%, rgba(0, 170, 255, 0.16) 0 180px, transparent 181px),
+                radial-gradient(circle at 80% 10%, rgba(123, 92, 255, 0.14) 0 220px, transparent 221px),
+                linear-gradient(120deg, rgba(0, 0, 0, 0.04) 0%, rgba(0, 0, 0, 0) 45%),
+                linear-gradient(rgba(24, 28, 39, 0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(24, 28, 39, 0.08) 1px, transparent 1px);
+            background-size: auto, auto, auto, 28px 28px, 28px 28px;
+            background-attachment: fixed;
             min-height: 100vh;
             padding: 20px;
             color: #222;
@@ -630,6 +618,5 @@ with open(
 
     f.write(html)
 
-print(f"Sucesso! Excel gerado: {arquivo_excel}")
 print(f"Sucesso! HTML gerado : {arquivo_html}")
 print(f"Sucesso! Noticias encontradas: {len(df)}")

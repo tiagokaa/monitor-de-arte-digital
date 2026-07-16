@@ -373,6 +373,35 @@ html = f"""
             box-shadow: 0 0 0 3px rgba(34, 34, 34, 0.15);
         }}
 
+        .category-filters {{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 14px;
+        }}
+
+        .category-button {{
+            border: 1px solid #bfbfbf;
+            background: #ffffff;
+            color: #333;
+            border-radius: 999px;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }}
+
+        .category-button:hover {{
+            border-color: #777;
+            background: #f0f0f0;
+        }}
+
+        .category-button.active {{
+            background: #333;
+            color: #fff;
+            border-color: #333;
+        }}
+
         main {{
             max-width: 1200px;
             margin: 0 auto;
@@ -528,8 +557,9 @@ html = f"""
 
     <section class="search-container" aria-label="Filtro de noticias">
         <label class="search-label" for="news-search">Buscar notícias por categoria, palavra-chave ou título</label>
-        <input id="news-search" class="search-input" type="search" placeholder="Digite para filtrar..." list="keyword-suggestions" autocomplete="off">
+        <input id="news-search" class="search-input" type="text" placeholder="Digite para filtrar..." list="keyword-suggestions" autocomplete="on">
         <datalist id="keyword-suggestions"></datalist>
+        <div id="category-filters" class="category-filters" aria-label="Filtros por categoria"></div>
     </section>
 
     <p id="no-results-message" class="no-results" hidden>Nenhuma notícia encontrada.</p>
@@ -548,10 +578,13 @@ html = f"""
         const cards = Array.from(document.querySelectorAll("main .card"));
         const noResultsMessage = document.getElementById("no-results-message");
         const newsCount = document.getElementById("news-count");
+        const categoryFilters = document.getElementById("category-filters");
+        let activeCategory = "";
 
         const normalizeText = (value) => value.toLocaleLowerCase("pt-BR");
 
         const suggestionMap = new Map();
+        const categorySet = new Set();
         for (const card of cards) {{
             const terms = [
                 card.dataset.keyword?.trim(),
@@ -568,6 +601,11 @@ html = f"""
                     suggestionMap.set(normalizedTerm, term);
                 }}
             }}
+
+            const category = card.dataset.category?.trim();
+            if (category) {{
+                categorySet.add(category);
+            }}
         }}
 
         Array
@@ -579,6 +617,29 @@ html = f"""
                 suggestionsList.appendChild(option);
             }});
 
+        const renderCategoryButtons = () => {{
+            const categories = Array.from(categorySet)
+                .sort((a, b) => a.localeCompare(b, "pt-BR", {{ sensitivity: "base" }}));
+
+            const allButton = document.createElement("button");
+            allButton.type = "button";
+            allButton.className = "category-button active";
+            allButton.textContent = "Todas";
+            allButton.dataset.category = "";
+            categoryFilters.appendChild(allButton);
+
+            for (const category of categories) {{
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "category-button";
+                button.textContent = category;
+                button.dataset.category = category;
+                categoryFilters.appendChild(button);
+            }}
+        }};
+
+        renderCategoryButtons();
+
         const applyFilter = () => {{
             const filterText = normalizeText(searchInput.value.trim());
             let visibleCards = 0;
@@ -588,7 +649,9 @@ html = f"""
                 const keyword = card.dataset.keyword ?? "";
                 const category = card.dataset.category ?? "";
                 const searchableText = normalizeText(`${{title}} ${{keyword}} ${{category}}`);
-                const isMatch = !filterText || searchableText.includes(filterText);
+                const textMatch = !filterText || searchableText.includes(filterText);
+                const categoryMatch = !activeCategory || normalizeText(category) === normalizeText(activeCategory);
+                const isMatch = textMatch && categoryMatch;
 
                 card.classList.toggle("is-hidden", !isMatch);
                 if (isMatch) {{
@@ -601,6 +664,21 @@ html = f"""
         }};
 
         searchInput.addEventListener("input", applyFilter);
+
+        categoryFilters.addEventListener("click", (event) => {{
+            const button = event.target.closest(".category-button");
+            if (!button) {{
+                return;
+            }}
+
+            activeCategory = button.dataset.category ?? "";
+
+            for (const item of categoryFilters.querySelectorAll(".category-button")) {{
+                item.classList.toggle("active", item === button);
+            }}
+
+            applyFilter();
+        }});
     </script>
 
 </body>

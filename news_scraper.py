@@ -132,23 +132,31 @@ noticias = []
 def montar_query_google(keyword: str) -> str:
 
     termo = keyword.strip()
+    termo_limpo = termo.strip("\"").strip()
+    is_frase_exata = (
+        (termo.startswith("\"") and termo.endswith("\"") and len(termo) > 2)
+        or any(char.isspace() for char in termo_limpo)
+    )
 
-    # Termos entre aspas devem ser buscados como frase exata.
-    if termo.startswith("\"") and termo.endswith("\"") and len(termo) > 2:
-        termo_limpo = termo[1:-1].strip()
+    # Termos compostos (ou já entre aspas) são buscados como frase exata.
+    if is_frase_exata and termo_limpo:
         return f"\"{termo_limpo}\""
 
-    return termo
+    return termo_limpo
 
 def noticia_corresponde_keyword(titulo: str, keyword: str) -> bool:
 
     termo = keyword.strip()
+    termo_limpo = termo.strip("\"").strip()
     titulo_normalizado = titulo.casefold()
+    is_frase_exata = (
+        (termo.startswith("\"") and termo.endswith("\"") and len(termo) > 2)
+        or any(char.isspace() for char in termo_limpo)
+    )
 
-    # Para termos entre aspas, exigimos frase exata no titulo.
-    if termo.startswith("\"") and termo.endswith("\"") and len(termo) > 2:
-        termo_limpo = termo[1:-1].strip().casefold()
-        return termo_limpo in titulo_normalizado
+    # Para termos compostos, exigimos frase exata no titulo.
+    if is_frase_exata and termo_limpo:
+        return termo_limpo.casefold() in titulo_normalizado
 
     return True
 

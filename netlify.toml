@@ -1,0 +1,8 @@
+[build]
+command = "pip install -r requirements.txt && python news_scraper.py"
+publish = "."
+
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200

@@ -311,15 +311,19 @@ html = f"""
 
         body {{
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #F3F4F6;
+            background-color: #EAEFF2;
             min-height: 100vh;
-            padding: 24px 16px;
+            padding: 40px 16px;
             color: #1F1F1F;
         }}
 
         .container {{
-            max-width: 1200px;
+            max-width: 1240px;
             margin: 0 auto;
+            background-color: #FFFFFF;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
         }}
 
         /* HEADER LAYOUT */
@@ -653,7 +657,12 @@ html = f"""
 
         @media (max-width: 576px) {{
             body {{
-                padding: 16px 12px;
+                padding: 12px 8px;
+            }}
+            .container {{
+                padding: 24px 16px;
+                border-radius: 12px;
+                box-shadow: none;
             }}
             .header-logo-card {{
                 padding: 16px;

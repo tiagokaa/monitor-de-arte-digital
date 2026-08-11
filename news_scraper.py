@@ -265,9 +265,9 @@ def formatar_data_pt(dt) -> str:
     return f"Data de publicação: {dia} de {mes} de {ano} | às {hora}h"
 
 ultima_atualizacao_curta = datetime.now(TIMEZONE).strftime("%d/%m/%Y")
-ultima_atualizacao = datetime.now(TIMEZONE).strftime(
-    "%d/%m/%Y %H:%M:%S"
-) + f" ({DISPLAY_TIMEZONE})"
+ultima_atualizacao_completa = datetime.now(TIMEZONE).strftime(
+    "Clipping · Atualização automática em %d/%m/%Y às %Hh%M (UTC-3)"
+)
 
 cards_html = ""
 
@@ -732,7 +732,12 @@ html = f"""
         </section>
 
         <footer>
-            <p>Monitor de notícias automático • Atualizado em {ultima_atualizacao}</p>
+            <p style="line-height: 1.6; color: #71717A;">
+                {ultima_atualizacao_completa}<br>
+                Desenvolvimento: Tiago Souza<br>
+                Design: Marina Zanola<br>
+                Arquitetura de palavras-chave: coleta desenvolvida por Laboratório de Inteligência Artificial, Inovação Tecnológica e Criatividade
+            </p>
         </footer>
     </div>
 

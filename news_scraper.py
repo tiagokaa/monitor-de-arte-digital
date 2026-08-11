@@ -1,5 +1,8 @@
 import requests
 import pandas as pd
+import urllib3
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
@@ -164,7 +167,7 @@ def coletar_noticias_rss(category: str, keyword: str, fonte: str, rss_url: str) 
 
     try:
 
-        response = requests.get(rss_url, timeout=20)
+        response = requests.get(rss_url, timeout=20, verify=False)
 
         soup = BeautifulSoup(
             response.content,
@@ -249,6 +252,19 @@ df = df.drop(columns=["TituloNormalizado"])
 # HTML5 COM DESIGN MODERNO
 # ======================================
 
+def formatar_data_pt(dt) -> str:
+    meses = {
+        1: "janeiro", 2: "fevereiro", 3: "março", 4: "abril",
+        5: "maio", 6: "junho", 7: "julho", 8: "agosto",
+        9: "setembro", 10: "outubro", 11: "novembro", 12: "dezembro"
+    }
+    dia = dt.day
+    mes = meses[dt.month]
+    ano = dt.year
+    hora = dt.hour
+    return f"Data de publicação: {dia} de {mes} de {ano} | às {hora}h"
+
+ultima_atualizacao_curta = datetime.now(TIMEZONE).strftime("%d/%m/%Y")
 ultima_atualizacao = datetime.now(TIMEZONE).strftime(
     "%d/%m/%Y %H:%M:%S"
 ) + f" ({DISPLAY_TIMEZONE})"
@@ -260,27 +276,20 @@ for idx, (_, row) in enumerate(df.iterrows(), 1):
     titulo = escape(str(row["Titulo"]))
     categoria = escape(str(row["Categoria"]))
     keyword = escape(str(row["Palavra-chave"]))
-    data = row["Data"].strftime("%d/%m/%Y %H:%M")
+    data_formatada = formatar_data_pt(row["Data"])
     link = escape(str(row["Link"]))
 
     cards_html += f"""
     <article class="card" data-category="{categoria}" data-keyword="{keyword}">
 
-        <div class="card-header">
-            <span class="card-number">#{idx}</span>
-            <div class="card-tags">
-                <span class="badge badge-category">{categoria}</span>
-                <span class="badge badge-keyword">{keyword}</span>
-            </div>
-        </div>
+        <span class="card-badge">{categoria}</span>
 
         <a href="{link}" target="_blank" rel="noopener noreferrer" class="card-title-link" title="Abrir noticia">
             <h3 class="card-title">{titulo}</h3>
         </a>
 
         <div class="card-meta">
-            <span class="meta-icon">📅</span>
-            <time>{data}</time>
+            {data_formatada}
         </div>
 
     </article>
@@ -288,15 +297,11 @@ for idx, (_, row) in enumerate(df.iterrows(), 1):
 
 html = f"""
 <!DOCTYPE html>
-
 <html lang="pt-BR">
-
 <head>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitor de Notícias de Arte Digital e IA</title>
-
+    <title>Monitor de Notícias - LIAITC</title>
     <style>
         * {{
             margin: 0;
@@ -305,289 +310,422 @@ html = f"""
         }}
 
         body {{
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-            background-color: #f3f5f7;
-            background-image:
-                radial-gradient(circle at 20% 20%, rgba(0, 170, 255, 0.16) 0 180px, transparent 181px),
-                radial-gradient(circle at 80% 10%, rgba(123, 92, 255, 0.14) 0 220px, transparent 221px),
-                linear-gradient(120deg, rgba(0, 0, 0, 0.04) 0%, rgba(0, 0, 0, 0) 45%),
-                linear-gradient(rgba(24, 28, 39, 0.08) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(24, 28, 39, 0.08) 1px, transparent 1px);
-            background-size: auto, auto, auto, 28px 28px, 28px 28px;
-            background-attachment: fixed;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #F3F4F6;
             min-height: 100vh;
-            padding: 20px;
-            color: #222;
+            padding: 24px 16px;
+            color: #1F1F1F;
         }}
 
-        header {{
+        .container {{
             max-width: 1200px;
-            margin: 0 auto 40px;
-            text-align: center;
-            color: white;
-            background: #202020;
-            padding: 40px 20px;
-            border-radius: 12px;
-            border: 1px solid #343434;
+            margin: 0 auto;
         }}
 
-        header h1 {{
-            font-size: 2.5rem;
-            margin-bottom: 15px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-        }}
-
-        .stats {{
+        /* HEADER LAYOUT */
+        .header-container {{
             display: flex;
-            justify-content: center;
-            gap: 30px;
-            flex-wrap: wrap;
-            margin-top: 20px;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 32px;
         }}
 
-        .stat {{
-            background: #ffffff;
-            padding: 15px 25px;
+        .header-logo-card {{
+            background-color: #D4E627;
             border-radius: 8px;
-            font-size: 1.1rem;
-            color: #222;
-            border: 1px solid #d8d8d8;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            color: #1E1E1E;
         }}
 
-        .stat strong {{
-            display: block;
+        .logo-title {{
             font-size: 1.8rem;
-            margin-top: 5px;
-            color: #111;
+            font-weight: 800;
+            letter-spacing: -0.05em;
+            margin-right: 16px;
+            white-space: nowrap;
         }}
 
-        .search-container {{
-            max-width: 1200px;
-            margin: 0 auto 24px;
+        .logo-divider {{
+            width: 1px;
+            height: 32px;
+            background-color: #1E1E1E;
+            opacity: 0.3;
+            margin-right: 16px;
         }}
 
-        .search-label {{
-            display: block;
-            color: #222;
-            font-weight: 600;
-            margin-bottom: 10px;
+        .logo-subtitle {{
+            font-size: 1rem;
+            font-weight: 500;
+            line-height: 1.4;
+        }}
+
+        .header-stats {{
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }}
+
+        .stat-card {{
+            background-color: #A5C3E6;
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: #1A202C;
+        }}
+
+        .stat-label {{
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #4A5568;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }}
+
+        .stat-value {{
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #1A202C;
+        }}
+
+        @media (min-width: 992px) {{
+            .header-container {{
+                display: grid;
+                grid-template-columns: 3fr 1fr 1fr;
+            }}
+            .header-stats {{
+                grid-column: span 2;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 16px;
+            }}
+        }}
+
+        /* EXPLORAR CONTEUDOS */
+        .explore-section {{
+            margin-bottom: 32px;
+        }}
+
+        .explore-title {{
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1E1E1E;
+            margin-bottom: 4px;
+        }}
+
+        .explore-subtitle {{
+            font-size: 0.9rem;
+            color: #71717A;
+            margin-bottom: 16px;
         }}
 
         .search-input {{
             width: 100%;
             padding: 14px 16px;
-            border: 1px solid #c8c8c8;
-            border-radius: 10px;
-            background: #FFFFFF;
+            border: 1px solid #E4E4E7;
+            border-radius: 8px;
+            background-color: #FFFFFF;
             font-size: 1rem;
-            color: #222;
+            color: #18181B;
             outline: none;
-            transition: box-shadow 0.2s, border-color 0.2s;
+            transition: all 0.2s ease;
+        }}
+
+        .search-input::placeholder {{
+            color: #A1A1AA;
         }}
 
         .search-input:focus {{
-            border-color: #777;
-            box-shadow: 0 0 0 3px rgba(34, 34, 34, 0.15);
+            border-color: #A1A1AA;
+            box-shadow: 0 0 0 3px rgba(161, 161, 170, 0.15);
         }}
 
-        .category-filters {{
+        .filters-container {{
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
-            margin-top: 14px;
+            margin-top: 16px;
+            align-items: center;
         }}
 
-        .category-button {{
-            border: 1px solid #bfbfbf;
-            background: #ffffff;
-            color: #333;
-            border-radius: 999px;
-            padding: 8px 12px;
-            font-size: 0.9rem;
+        .filter-pill {{
+            background-color: #FFFFFF;
+            border: 1px solid #E4E4E7;
+            color: #71717A;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }}
+
+        .filter-pill:hover {{
+            background-color: #F4F4F5;
+            color: #18181B;
+            border-color: #D4D4D8;
+        }}
+
+        .filter-pill.active {{
+            background-color: #D4E627;
+            color: #1E1E1E;
+            border-color: #D4E627;
+            font-weight: 700;
+        }}
+
+        .filter-pill.extra-filter {{
+            transition: all 0.2s ease;
+        }}
+
+        .filter-pill.is-hidden-filter {{
+            display: none;
+        }}
+
+        .more-filters-btn {{
+            background-color: #18181B;
+            color: #FFFFFF;
+            border: 1px solid #18181B;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
         }}
 
-        .category-button:hover {{
-            border-color: #777;
-            background: #f0f0f0;
+        .more-filters-btn:hover {{
+            background-color: #27272A;
+            border-color: #27272A;
         }}
 
-        .category-button.active {{
-            background: #333;
-            color: #fff;
-            border-color: #333;
+        /* CONTEUDOS ENCONTRADOS SECTION */
+        .results-container {{
+            background-color: #EFF2F5;
+            border-radius: 12px;
+            padding: 32px 24px;
+            margin-bottom: 40px;
+        }}
+
+        .results-title {{
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #18181B;
+            margin-bottom: 4px;
+        }}
+
+        .results-subtitle {{
+            font-size: 0.9rem;
+            color: #71717A;
+            margin-bottom: 24px;
         }}
 
         main {{
-            max-width: 1200px;
-            margin: 0 auto;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            grid-template-columns: 1fr;
             gap: 20px;
         }}
 
+        @media (min-width: 768px) {{
+            main {{
+                grid-template-columns: repeat(2, 1fr);
+            }}
+        }}
+
+        @media (min-width: 1024px) {{
+            main {{
+                grid-template-columns: repeat(3, 1fr);
+            }}
+        }}
+
+        /* CARD STYLE */
         .card {{
-            background: #FFFFFF;
-            border-radius: 12px;
+            background-color: #FFFFFF;
+            border-radius: 8px;
             padding: 24px;
-            border: 1px solid #d8d8d8;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid #E4E4E7;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 12px;
+            transition: all 0.2s ease;
         }}
 
         .card:hover {{
-            transform: translateY(-5px);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.14);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }}
 
         .card.is-hidden {{
-            display: none;
+            display: none !important;
         }}
 
-        .card-header {{
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 10px;
-        }}
-
-        .card-tags {{
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-            gap: 8px;
-        }}
-
-        .card-number {{
-            font-weight: 700;
-            color: #666;
-            font-size: 0.9rem;
-        }}
-
-        .badge {{
-            color: #fff;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
+        .card-badge {{
+            display: inline-block;
+            background-color: #F4F4F5;
+            color: #71717A;
+            font-size: 0.75rem;
             font-weight: 600;
-            white-space: nowrap;
-        }}
-
-        .badge-category {{
-            background: #333;
-        }}
-
-        .badge-keyword {{
-            background: #666;
+            padding: 6px 12px;
+            border-radius: 4px;
+            margin-bottom: 4px;
+            align-self: flex-start;
         }}
 
         .card-title-link {{
             text-decoration: none;
-            color: inherit;
-            cursor: pointer;
+            color: #18181B;
+        }}
+
+        .card-title-link:hover {{
+            color: #52525B;
         }}
 
         .card-title {{
-            font-size: 1.2rem;
-            line-height: 1.4;
-            color: #222;
+            font-size: 1.15rem;
             font-weight: 600;
-            transition: all 0.2s;
-        }}
-
-        .card-title-link:hover .card-title {{
-            color: #000;
+            line-height: 1.45;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }}
 
         .card-meta {{
+            font-size: 0.8rem;
+            color: #A1A1AA;
+            margin-top: auto;
+            border-top: 1px solid #F4F4F5;
+            padding-top: 12px;
+        }}
+
+        /* PAGINATION */
+        .pagination-container {{
             display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #666;
-            font-size: 0.95rem;
+            justify-content: center;
+            margin-top: 32px;
         }}
 
-        .meta-icon {{
-            font-size: 1.1rem;
+        .view-more-btn {{
+            background-color: #18181B;
+            color: #FFFFFF;
+            border: 1px solid #18181B;
+            padding: 12px 32px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }}
 
-        time {{
-            font-weight: 500;
-            color: #444;
+        .view-more-btn:hover {{
+            background-color: #27272A;
+            border-color: #27272A;
         }}
 
-        footer {{
-            text-align: center;
-            margin-top: 50px;
-            color: #666;
-            font-size: 0.95rem;
+        .view-more-btn.is-hidden {{
+            display: none !important;
         }}
 
+        /* NO RESULTS */
         .no-results {{
-            max-width: 1200px;
-            margin: 0 auto 24px;
-            background: #e9e9e9;
-            color: #222;
+            background-color: #F4F4F5;
+            color: #71717A;
             text-align: center;
             font-weight: 600;
-            border-radius: 10px;
-            padding: 14px 16px;
+            border-radius: 8px;
+            padding: 32px 16px;
+            border: 1px dashed #D4D4D8;
         }}
 
-        @media (max-width: 768px) {{
-            header h1 {{
-                font-size: 1.8rem;
-            }}
+        /* FOOTER */
+        footer {{
+            text-align: center;
+            margin-top: 40px;
+            color: #71717A;
+            font-size: 0.85rem;
+        }}
 
-            main {{
-                grid-template-columns: 1fr;
+        @media (max-width: 576px) {{
+            body {{
+                padding: 16px 12px;
             }}
-
-            .stats {{
-                flex-direction: column;
-                gap: 15px;
+            .header-logo-card {{
+                padding: 16px;
+            }}
+            .logo-title {{
+                font-size: 1.4rem;
+                margin-right: 12px;
+            }}
+            .logo-divider {{
+                height: 24px;
+                margin-right: 12px;
+            }}
+            .logo-subtitle {{
+                font-size: 0.85rem;
+            }}
+            .results-container {{
+                padding: 20px 16px;
             }}
         }}
     </style>
-
 </head>
-
 <body>
 
-    <header>
-        <h1>📰 Monitor de Notícias de Arte Digital e IA</h1>
-        <div class="stats">
-            <div class="stat">
-                Noticias encontradas
-                <strong id="news-count">{len(df)}</strong>
+    <div class="container">
+        <!-- HEADER -->
+        <header class="header-container">
+            <div class="header-logo-card">
+                <div class="logo-title">LIAITC</div>
+                <div class="logo-divider"></div>
+                <div class="logo-subtitle">Laboratório de Inteligência Artificial, Inovação Tecnológica e Criatividade</div>
             </div>
-            <div class="stat">
-                Ultima atualizacao
-                <strong>{ultima_atualizacao}</strong>
+            <div class="header-stats">
+                <div class="stat-card">
+                    <div class="stat-label">Conteúdos Encontrados</div>
+                    <div class="stat-value" id="news-count">{len(df)}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Última atualização</div>
+                    <div class="stat-value" style="font-size: 1.3rem;">{ultima_atualizacao_curta}</div>
+                </div>
             </div>
-        </div>
-    </header>
+        </header>
 
-    <section class="search-container" aria-label="Filtro de noticias">
-        <label class="search-label" for="news-search">Buscar notícias por categoria, palavra-chave ou título</label>
-        <input id="news-search" class="search-input" type="text" placeholder="Digite para filtrar..." list="keyword-suggestions" autocomplete="on">
-        <datalist id="keyword-suggestions"></datalist>
-        <div id="category-filters" class="category-filters" aria-label="Filtros por categoria"></div>
-    </section>
+        <!-- EXPLORAR CONTEUDOS -->
+        <section class="explore-section">
+            <h2 class="explore-title">Explorar conteúdos</h2>
+            <p class="explore-subtitle">Busque por título, categoria, palavras-chave ou temas relacionados.</p>
+            <input id="news-search" class="search-input" type="text" placeholder="Digite sua busca" list="keyword-suggestions" autocomplete="off">
+            <datalist id="keyword-suggestions"></datalist>
+            <div id="category-filters" class="filters-container"></div>
+        </section>
 
-    <p id="no-results-message" class="no-results" hidden>Nenhuma notícia encontrada.</p>
+        <!-- CONTEUDOS ENCONTRADOS -->
+        <section class="results-container">
+            <h2 class="results-title">Conteúdos encontrados</h2>
+            <p class="results-subtitle">Resultados organizados a partir dos filtros acima.</p>
+            
+            <p id="no-results-message" class="no-results" hidden>Nenhuma notícia encontrada.</p>
 
-    <main>
-        {cards_html}
-    </main>
+            <main>
+                {cards_html}
+            </main>
 
-    <footer>
-        <p>Monitor automático de arte digital e IA • Atualizado em {ultima_atualizacao}</p>
-    </footer>
+            <div class="pagination-container">
+                <button id="view-more-btn" class="view-more-btn">Ver mais</button>
+            </div>
+        </section>
+
+        <footer>
+            <p>Monitor de notícias automático • Atualizado em {ultima_atualizacao}</p>
+        </footer>
+    </div>
 
     <script>
         const searchInput = document.getElementById("news-search");
@@ -596,37 +734,39 @@ html = f"""
         const noResultsMessage = document.getElementById("no-results-message");
         const newsCount = document.getElementById("news-count");
         const categoryFilters = document.getElementById("category-filters");
+        const viewMoreBtn = document.getElementById("view-more-btn");
+
+        const CARDS_PER_PAGE = 9;
+        let visibleCount = CARDS_PER_PAGE;
         let activeCategory = "";
 
         const normalizeText = (value) => value.toLocaleLowerCase("pt-BR");
 
+        // Collect suggestion terms and unique categories
         const suggestionMap = new Map();
         const categorySet = new Set();
         for (const card of cards) {{
-            const terms = [
-                card.dataset.keyword?.trim(),
-                card.dataset.category?.trim()
-            ];
+            const keyword = card.dataset.keyword?.trim();
+            const category = card.dataset.category?.trim();
 
-            for (const term of terms) {{
-                if (!term) {{
-                    continue;
-                }}
-
-                const normalizedTerm = normalizeText(term);
-                if (!suggestionMap.has(normalizedTerm)) {{
-                    suggestionMap.set(normalizedTerm, term);
+            if (keyword) {{
+                const normalizedKeyword = normalizeText(keyword);
+                if (!suggestionMap.has(normalizedKeyword)) {{
+                    suggestionMap.set(normalizedKeyword, keyword);
                 }}
             }}
 
-            const category = card.dataset.category?.trim();
             if (category) {{
                 categorySet.add(category);
+                const normalizedCategory = normalizeText(category);
+                if (!suggestionMap.has(normalizedCategory)) {{
+                    suggestionMap.set(normalizedCategory, category);
+                }}
             }}
         }}
 
-        Array
-            .from(suggestionMap.values())
+        // Populate search datalist
+        Array.from(suggestionMap.values())
             .sort((a, b) => a.localeCompare(b, "pt-BR", {{ sensitivity: "base" }}))
             .forEach((term) => {{
                 const option = document.createElement("option");
@@ -634,72 +774,136 @@ html = f"""
                 suggestionsList.appendChild(option);
             }});
 
+        // Render dynamic category filter buttons
         const renderCategoryButtons = () => {{
             const categories = Array.from(categorySet)
                 .sort((a, b) => a.localeCompare(b, "pt-BR", {{ sensitivity: "base" }}));
 
+            categoryFilters.innerHTML = "";
+
+            // "TODOS" button
             const allButton = document.createElement("button");
             allButton.type = "button";
-            allButton.className = "category-button active";
-            allButton.textContent = "Todas";
+            allButton.className = "filter-pill active";
+            allButton.textContent = "TODOS";
             allButton.dataset.category = "";
             categoryFilters.appendChild(allButton);
 
-            for (const category of categories) {{
+            // Render categories
+            categories.forEach((category, index) => {{
                 const button = document.createElement("button");
                 button.type = "button";
-                button.className = "category-button";
-                button.textContent = category;
                 button.dataset.category = category;
+                button.textContent = category;
+
+                // Show first 5 and hide the rest under "Mais filtros"
+                if (index >= 5) {{
+                    button.className = "filter-pill extra-filter is-hidden-filter";
+                }} else {{
+                    button.className = "filter-pill";
+                }}
                 categoryFilters.appendChild(button);
+            }});
+
+            // Add "Mais filtros" button if needed
+            if (categories.length > 5) {{
+                const moreBtn = document.createElement("button");
+                moreBtn.type = "button";
+                moreBtn.className = "more-filters-btn";
+                moreBtn.textContent = "Mais filtros";
+                moreBtn.addEventListener("click", () => {{
+                    const extraPills = categoryFilters.querySelectorAll(".extra-filter");
+                    const isHidden = extraPills[0].classList.contains("is-hidden-filter");
+                    extraPills.forEach(pill => {{
+                        pill.classList.toggle("is-hidden-filter", !isHidden);
+                    }});
+                    moreBtn.textContent = isHidden ? "Menos filtros" : "Mais filtros";
+                }});
+                categoryFilters.appendChild(moreBtn);
             }}
         }};
 
         renderCategoryButtons();
 
+        // Filtering and Pagination Logic
         const applyFilter = () => {{
             const filterText = normalizeText(searchInput.value.trim());
-            let visibleCards = 0;
+            const matchingCards = [];
 
+            // Filter all cards first
             for (const card of cards) {{
                 const title = card.querySelector(".card-title")?.textContent ?? "";
                 const keyword = card.dataset.keyword ?? "";
                 const category = card.dataset.category ?? "";
                 const searchableText = normalizeText(`${{title}} ${{keyword}} ${{category}}`);
+                
                 const textMatch = !filterText || searchableText.includes(filterText);
                 const categoryMatch = !activeCategory || normalizeText(category) === normalizeText(activeCategory);
-                const isMatch = textMatch && categoryMatch;
 
-                card.classList.toggle("is-hidden", !isMatch);
-                if (isMatch) {{
-                    visibleCards += 1;
+                if (textMatch && categoryMatch) {{
+                    matchingCards.push(card);
+                }} else {{
+                    card.classList.add("is-hidden");
                 }}
             }}
 
-            newsCount.textContent = String(visibleCards);
-            noResultsMessage.hidden = visibleCards > 0;
+            // Update found counter
+            newsCount.textContent = String(matchingCards.length);
+
+            // Paginate results
+            const totalMatches = matchingCards.length;
+            const paginatedCards = matchingCards.slice(0, visibleCount);
+
+            for (const card of paginatedCards) {{
+                card.classList.remove("is-hidden");
+            }}
+
+            for (let i = visibleCount; i < totalMatches; i++) {{
+                matchingCards[i].classList.add("is-hidden");
+            }}
+
+            // Show/hide view more button
+            if (totalMatches > visibleCount) {{
+                viewMoreBtn.classList.remove("is-hidden");
+            }} else {{
+                viewMoreBtn.classList.add("is-hidden");
+            }}
+
+            noResultsMessage.hidden = totalMatches > 0;
         }};
 
-        searchInput.addEventListener("input", applyFilter);
+        viewMoreBtn.addEventListener("click", () => {{
+            visibleCount += CARDS_PER_PAGE;
+            applyFilter();
+        }});
+
+        searchInput.addEventListener("input", () => {{
+            visibleCount = CARDS_PER_PAGE;
+            applyFilter();
+        }});
 
         categoryFilters.addEventListener("click", (event) => {{
-            const button = event.target.closest(".category-button");
-            if (!button) {{
+            const button = event.target.closest(".filter-pill");
+            if (!button || button.classList.contains("more-filters-btn")) {{
                 return;
             }}
 
             activeCategory = button.dataset.category ?? "";
 
-            for (const item of categoryFilters.querySelectorAll(".category-button")) {{
-                item.classList.toggle("active", item === button);
+            for (const item of categoryFilters.querySelectorAll(".filter-pill")) {{
+                if (!item.classList.contains("more-filters-btn")) {{
+                    item.classList.toggle("active", item === button);
+                }}
             }}
 
+            visibleCount = CARDS_PER_PAGE;
             applyFilter();
         }});
+
+        // Run initial filter to paginate
+        applyFilter();
     </script>
-
 </body>
-
 </html>
 """
 
